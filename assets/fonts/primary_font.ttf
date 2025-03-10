@@ -1,0 +1,6 @@
+from fontTools.ttLib import TTFont
+
+# Create a minimal font
+font = TTFont()
+font.setGlyphOrder(['.notdef', 'space'])
+font.save('assets/fonts/primary_font.ttf')
