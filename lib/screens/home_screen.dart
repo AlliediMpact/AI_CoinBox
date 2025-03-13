@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../constants/app_colors.dart';
 import '../providers/user_provider.dart';
@@ -10,6 +10,7 @@ import '../providers/wallet_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header.dart';
+import '../widgets/navigation_drawer.dart'; // Assuming you've separated drawer into its own widget.
 import '../services/firebase_service.dart';
 import '../models/transaction.dart';
 
@@ -27,16 +28,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
     // Load data when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final walletProvider = Provider.of<WalletProvider>(context, listen: false);
-      final transactionProvider =
-          Provider.of<TransactionProvider>(context, listen: false);
+      final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
 
-      walletProvider.refresh(); // Ensure this method exists
-      transactionProvider.loadTransactions(); // Ensure this method exists
+      walletProvider.refresh(); // Refresh wallet data
+      transactionProvider.loadTransactions(); // Load recent transactions
       _loadUserProfile(userProvider);
     });
   }
@@ -44,10 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUserProfile(UserProvider userProvider) async {
     final user = FirebaseService.auth.currentUser;
     if (user != null) {
-      final doc = await FirebaseService.firestore
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final doc = await FirebaseService.firestore.collection('users').doc(user.uid).get();
       if (doc.exists) {
         userProvider.setUser(user);
         userProvider.setProfileData(doc.data()!);
@@ -63,248 +59,82 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: const Text('Allied iMpact Coin Box'),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
-          },
-        ),
-        actions: [
-          // Wallet Balance
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Center(
-              child: Text(
-                'R${walletProvider.balance.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+      appBar: const Header(), // Use our enhanced Header widget
+      drawer: const NavigationDrawer(), // Custom drawer widget
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Adjust layout based on screen size
+          return RefreshIndicator(
+            onRefresh: () async {
+              await walletProvider.refresh();
+              await transactionProvider.loadTransactions();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Welcome Message
+                    Text(
+                      'Welcome, ${userProvider.fullName.split(' ').first}!',
+                      style: TextStyle(
+                        fontSize: constraints.maxWidth > 600 ? 28 : 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Wallet Balance Card
+                    _buildWalletCard(walletProvider),
+                    const SizedBox(height: 24),
+                    // Quick Actions Section
+                    const Text(
+                      'Quick Actions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildQuickActions(context),
+                    const SizedBox(height: 24),
+                    // Recent Transactions Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Recent Transactions',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/wallet');
+                          },
+                          child: const Text('View All'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildRecentTransactions(transactionProvider),
+                  ],
                 ),
               ),
             ),
-          ),
-
-          // Profile Icon
-          IconButton(
-            icon: CircleAvatar(
-              radius: 14,
-              backgroundImage: userProvider.profileImageUrl.isNotEmpty
-                  ? NetworkImage(userProvider.profileImageUrl)
-                  : const AssetImage('assets/images/user_placeholder.png')
-                      as ImageProvider,
-            ),
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-          ),
-        ],
+          );
+        },
       ),
-      drawer: _buildDrawer(context, userProvider, walletProvider),
-      body:
-          _buildBody(context, userProvider, walletProvider, transactionProvider),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
-  Widget _buildDrawer(
-    BuildContext context,
-    UserProvider userProvider,
-    WalletProvider walletProvider,
-  ) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
-              color: AppColors.primaryBlue,
-            ),
-            accountName: Text(
-              userProvider.fullName,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            accountEmail: Text(userProvider.email),
-            currentAccountPicture: CircleAvatar(
-              backgroundImage: userProvider.profileImageUrl.isNotEmpty
-                  ? NetworkImage(userProvider.profileImageUrl)
-                  : const AssetImage('assets/images/user_placeholder.png')
-                      as ImageProvider,
-            ),
-            otherAccountsPictures: [
-              Tooltip(
-                message:
-                    'Wallet Balance: R${walletProvider.balance.toStringAsFixed(2)}',
-                child: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.account_balance_wallet,
-                    color: AppColors.primaryPurple,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Home
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            selected: _selectedIndex == 0,
-            onTap: () {
-              setState(() {
-                _selectedIndex = 0;
-              });
-              Navigator.pop(context);
-            },
-          ),
-
-          // Wallet
-          ListTile(
-            leading: const Icon(Icons.account_balance_wallet),
-            title: const Text('My Wallet'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/wallet');
-            },
-          ),
-
-          // Trading
-          ListTile(
-            leading: const Icon(Icons.swap_horiz),
-            title: const Text('Trading'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/trade');
-            },
-          ),
-
-          // Referrals
-          ListTile(
-            leading: const Icon(Icons.people),
-            title: const Text('Referrals'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/referrals'); // Navigate to Referrals screen
-            },
-          ),
-
-          const Divider(),
-
-          // About Us
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('About Us'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/about');
-            },
-          ),
-
-          // Contact Us
-          ListTile(
-            leading: const Icon(Icons.contact_support),
-            title: const Text('Contact Us'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/contact');
-            },
-          ),
-
-          const Divider(),
-
-          // Logout
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () async {
-              Navigator.pop(context);
-              await FirebaseAuth.instance.signOut();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBody(
-    BuildContext context,
-    UserProvider userProvider,
-    WalletProvider walletProvider,
-    TransactionProvider transactionProvider,
-  ) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        await walletProvider.refresh(); // Ensure this method exists
-        await transactionProvider.loadTransactions(); // Ensure this method exists
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Message
-              Text(
-                'Welcome, ${userProvider.fullName.split(' ').first}!',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryBlue,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Wallet Balance Card
-              _buildWalletCard(walletProvider),
-              const SizedBox(height: 24),
-
-              // Quick Actions
-              const Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildQuickActions(context),
-              const SizedBox(height: 24),
-
-              // Recent Transactions
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Recent Transactions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/wallet');
-                    },
-                    child: const Text('View All'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _buildRecentTransactions(transactionProvider),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
+  // Wallet Card with gradient background and clear layout
   Widget _buildWalletCard(WalletProvider walletProvider) {
     return Card(
       elevation: 4,
@@ -400,6 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Quick Actions grid for Invest, Borrow, Refer, and History
   Widget _buildQuickActions(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -437,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Icons.history,
           AppColors.textSecondary,
           () {
-            Navigator.pushNamed(context, '/wallet'); // Navigate to the Wallet screen
+            Navigator.pushNamed(context, '/wallet');
           },
         ),
       ],
@@ -445,12 +276,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildActionButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed,
-  ) {
+      BuildContext context,
+      String label,
+      IconData icon,
+      Color color,
+      VoidCallback onPressed,
+      ) {
     return Column(
       children: [
         Ink(
@@ -467,14 +298,13 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-          ),
+          style: const TextStyle(fontSize: 12),
         ),
       ],
     );
   }
 
+  // Recent Transactions List
   Widget _buildRecentTransactions(TransactionProvider transactionProvider) {
     final transactions = transactionProvider.transactions;
 
@@ -497,13 +327,13 @@ class _HomeScreenState extends State<HomeScreen> {
             color: _getTransactionColor(transaction.type),
           ),
           title: Text(transaction.description),
-          subtitle: Text(
-              DateFormat('dd MMM yyyy, HH:mm').format(transaction.date)),
+          subtitle: Text(DateFormat('dd MMM yyyy, HH:mm').format(transaction.date)),
           trailing: Text(
             'R${transaction.amount.abs().toStringAsFixed(2)}',
             style: TextStyle(
-                color: _getTransactionColor(transaction.type),
-                fontWeight: FontWeight.bold),
+              color: _getTransactionColor(transaction.type),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         );
       },
@@ -532,6 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Bottom Navigation Bar for additional navigation
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       currentIndex: _selectedIndex,
@@ -539,6 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _selectedIndex = index;
         });
+        // Implement navigation based on index if needed.
       },
       items: const [
         BottomNavigationBarItem(
@@ -547,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.account_balance_wallet),
-          label: 'My Wallet',
+          label: 'Wallet',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.swap_horiz),
@@ -563,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.contact_support),
-          label: 'Contact Us',
+          label: 'Contact',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.logout),

@@ -1,21 +1,19 @@
 // File: lib/screens/settings_screen.dart
 
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
-  Future<void> _deleteAccount(BuildContext context) async {
+  Future<void> _logout(BuildContext context) async {
     try {
-      await AuthService().deleteAccount();
+      await AuthService().signOut();
+      Navigator.pushReplacementNamed(context, '/login');
+    } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account deleted successfully.")),
-      );
-      // Optionally, navigate to the login screen.
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to delete account: $e")),
+        SnackBar(content: Text('Logout failed: $error')),
       );
     }
   }
@@ -24,13 +22,47 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Settings"),
+        title: const Text('Settings'),
+        backgroundColor: AppColors.primaryBlue,
       ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () => _deleteAccount(context),
-          child: const Text("Delete Account"),
-        ),
+      body: ListView(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Account Details'),
+            onTap: () {
+              // Navigate to account details page
+              Navigator.pushNamed(context, '/profile');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.security),
+            title: const Text('Security Settings'),
+            onTap: () {
+              // Navigate to security settings page
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.notifications),
+            title: const Text('Notification Preferences'),
+            onTap: () {
+              // Navigate to notification settings page
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.help),
+            title: const Text('Help & Support'),
+            onTap: () {
+              // Navigate to FAQ or support page
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            onTap: () => _logout(context),
+          ),
+        ],
       ),
     );
   }

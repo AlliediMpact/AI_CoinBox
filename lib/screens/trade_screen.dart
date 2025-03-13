@@ -1,247 +1,171 @@
+// File: lib/screens/trade_screen.dart
+
 import 'package:flutter/material.dart';
-import '../models/investment.dart';
-import '../models/loan.dart';
+import 'package:provider/provider.dart';
+import '../constants/app_colors.dart';
 import '../services/trade_service.dart';
-import '../widgets/custom_button.dart';
+import '../providers/transaction_provider.dart';
 
 class TradeScreen extends StatefulWidget {
   const TradeScreen({Key? key}) : super(key: key);
 
   @override
-  State<TradeScreen> createState() => _TradeScreenState();
+  _TradeScreenState createState() => _TradeScreenState();
 }
 
 class _TradeScreenState extends State<TradeScreen> {
-  List<Investment> _investments = [];
-  List<Loan> _loans = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
+  List<dynamic> _investments = [];
+  List<dynamic> _loans = [];
 
   @override
   void initState() {
     super.initState();
-    _loadTradingData();
+    _fetchTradeData();
   }
 
-  // Method to load trading data from Firestore
-  Future<void> _loadTradingData() async {
+  Future<void> _fetchTradeData() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
-      final investments = await TradeService.getInvestments();
-      final loans = await TradeService.getLoans();
-      setState(() {
-        _investments = investments;
-        _loans = loans;
-        _isLoading = false;
-      });
+      _investments = await TradeService.getInvestments();
+      _loans = await TradeService.getLoans();
     } catch (e) {
-      _showErrorDialog('Failed to load trading data. Please try again.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching trade data: $e')),
+      );
     }
-  }
-
-  // Method to display error dialog
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('An Error Occurred!'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('Okay'),
-          ),
-        ],
-      ),
-    );
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final transactionProvider = Provider.of<TransactionProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trade'),
+        title: const Text('Trading'),
+        backgroundColor: AppColors.primaryBlue,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+          : RefreshIndicator(
+              onRefresh: _fetchTradeData,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Investments Section
                     const Text(
-                      'Investment Opportunities',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      'Investments',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    ..._investments.map((investment) => InvestmentCard(investment: investment)).toList(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
+                    _buildInvestmentList(),
+                    const SizedBox(height: 24),
+                    // Loans Section
                     const Text(
-                      'Borrowing Options',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      'Loans',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    ..._loans.map((loan) => LoanCard(loan: loan)).toList(),
+                    const SizedBox(height: 8),
+                    _buildLoanList(),
                   ],
                 ),
               ),
             ),
-    );
-  }
-}
-
-// Example widget for displaying an investment opportunity
-class InvestmentCard extends StatelessWidget {
-  final Investment investment;
-
-  const InvestmentCard({Key? key, required this.investment}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              investment.title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text('Amount: \$${investment.amount}'),
-            const SizedBox(height: 8),
-            CustomButton(
-              text: 'Invest Now',
-              onPressed: () {
-                // Implement investment logic
-                _invest(investment);
-              },
-            ),
-          ],
-        ),
-      ),
+      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  // Method to handle investment logic
-  void _invest(Investment investment) {
-    // TODO: Implement investment logic based on business model
-  }
-}
-
-// Example widget for displaying a borrowing option
-class LoanCard extends StatelessWidget {
-  final Loan loan;
-
-  const LoanCard({Key? key, required this.loan}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loan.title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text('Amount: \$${loan.amount}'),
-            const SizedBox(height: 8),
-            CustomButton(
-              text: 'Borrow Now',
-              onPressed: () {
-                // Implement borrowing logic
-                _borrow(loan);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Method to handle borrowing logic
-  void _borrow(Loan loan) {
-    // TODO: Implement borrowing logic based on business model
-  }
-}
-
-// Method to handle investment logic
-void _invest(Investment investment) async {
-  try {
-    // Check user's membership plan and investment limit
-    final userMembershipPlan = await TradeService.getUserMembershipPlan();
-    if (investment.amount > userMembershipPlan.investmentLimit) {
-      _showErrorDialog('Investment amount exceeds your plan limit.');
-      return;
+  // Build the list of investments
+  Widget _buildInvestmentList() {
+    if (_investments.isEmpty) {
+      return const Text('No investments available.');
     }
-
-    // Calculate interest and update Firestore
-    final interest = investment.amount * 0.20; // 20% interest
-    final walletInterest = interest * 0.05; // 5% to wallet
-    final bankInterest = interest - walletInterest; // Rest to bank account
-
-    await TradeService.processInvestment(
-      investment: investment,
-      walletInterest: walletInterest,
-      bankInterest: bankInterest,
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _investments.length,
+      itemBuilder: (context, index) {
+        final inv = _investments[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ListTile(
+            title: Text(inv.title ?? 'Investment ${index + 1}'),
+            subtitle: Text('Amount: R${inv.amount} | Return: 20% per month'),
+            trailing: ElevatedButton(
+              onPressed: () {
+                // Process investment action here
+              },
+              child: const Text('Invest'),
+              style: ElevatedButton.styleFrom(
+                primary: AppColors.success,
+              ),
+            ),
+          ),
+        );
+      },
     );
-
-    _showSuccessDialog('Investment successful! Interest will be credited.');
-  } catch (e) {
-    _showErrorDialog('Failed to process investment. Please try again.');
   }
-}
 
-// Method to display success dialog
-void _showSuccessDialog(String message) {
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Success!'),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(ctx).pop();
-          },
-          child: const Text('Okay'),
-        ),
+  // Build the list of loans
+  Widget _buildLoanList() {
+    if (_loans.isEmpty) {
+      return const Text('No loans available.');
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _loans.length,
+      itemBuilder: (context, index) {
+        final loan = _loans[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ListTile(
+            title: Text(loan.title ?? 'Loan ${index + 1}'),
+            subtitle: Text('Amount: R${loan.amount} | Fee: 20%'),
+            trailing: ElevatedButton(
+              onPressed: () {
+                // Process loan action here
+              },
+              child: const Text('Borrow'),
+              style: ElevatedButton.styleFrom(
+                primary: AppColors.warning,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Bottom navigation for trade screen
+  Widget _buildBottomNavBar() {
+    return BottomNavigationBar(
+      currentIndex: 2, // Trade screen index
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
+        BottomNavigationBarItem(icon: Icon(Icons.swap_horiz), label: 'Trading'),
+        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Referrals'),
       ],
-    ),
-  );
-}
-
-// Method to handle borrowing logic
-void _borrow(Loan loan) async {
-  try {
-    // Check user's membership plan and loan limit
-    final userMembershipPlan = await TradeService.getUserMembershipPlan();
-    if (loan.amount > userMembershipPlan.loanLimit) {
-      _showErrorDialog('Loan amount exceeds your plan limit.');
-      return;
-    }
-
-    // Apply repayment fee and update Firestore
-    final repaymentFee = loan.amount * 0.25; // 25% repayment fee
-    final walletFee = repaymentFee * 0.05; // 5% to borrower's wallet
-    final investorFee = repaymentFee - walletFee; // Rest to investor
-
-    await TradeService.processLoan(
-      loan: loan,
-      walletFee: walletFee,
-      investorFee: investorFee,
+      onTap: (index) {
+        // Implement navigation logic based on the tapped index
+      },
     );
-
-    _showSuccessDialog('Loan processed successfully! Repayment details updated.');
-  } catch (e) {
-    _showErrorDialog('Failed to process loan. Please try again.');
   }
 }

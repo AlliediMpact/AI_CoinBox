@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary brand colors
   static const Color primaryBlue = Color(0xFF193281);
   static const Color primaryPurple = Color(0xFF5E17EB);
+  static const Color success = Color(0xFF4CAF50);
+  static const Color error = Color(0xFFF44336);
+  // Add other colors as needed
   
   // Gradient colors
   static const LinearGradient primaryGradient = LinearGradient(
