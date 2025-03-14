@@ -1,24 +1,19 @@
 // File: lib/providers/wallet_provider.dart
-
 import 'package:flutter/material.dart';
 
 class WalletProvider extends ChangeNotifier {
-  double _balance = 0.0;
-  double get balance => _balance;
+  double balance = 0.0;
+  double _totalInvested = 0.0;
+  double _totalBorrowed = 0.0;
+  double _commissionBalance = 0.0;
 
-  /// Deposits funds into the wallet.
-  Future<void> deposit(double amount) async {
-    // WHY: Update wallet balance after deposit.
-    _balance += amount;
-    notifyListeners();
-  }
+  double get totalInvested => _totalInvested;
+  double get totalBorrowed => _totalBorrowed;
+  double get commissionBalance => _commissionBalance;
 
-  /// Withdraws funds from the wallet.
-  Future<void> withdraw(double amount) async {
-    if (amount > _balance) {
-      throw Exception("Insufficient balance");
-    }
-    _balance -= amount;
+  Future<void> refresh() async {
+    // Implement logic to refresh wallet data
+    // For example, fetch data from Firestore and update properties.
     notifyListeners();
   }
 }
