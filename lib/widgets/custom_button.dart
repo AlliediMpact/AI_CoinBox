@@ -1,5 +1,4 @@
 // File: lib/widgets/custom_button.dart
-
 import 'package:flutter/material.dart';
 
 class CustomButton extends StatelessWidget {
@@ -17,7 +16,9 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      style: ElevatedButton.styleFrom(primary: btnColor),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: btnColor, // Changed from 'primary'
+      ),
       onPressed: onPressed,
       child: Text(text),
     );

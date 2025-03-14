@@ -6,6 +6,9 @@ import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 import '../providers/user_provider.dart';
 import '../services/firebase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
