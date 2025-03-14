@@ -10,10 +10,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_svg: ^1.0.0
-  font_awesome_flutter: ^10.1.0
-  flutter pub add flutter_staggered_grid_view 
-  firebase_analytics: latest_version
   
   # UI
   cupertino_icons: ^1.0.8

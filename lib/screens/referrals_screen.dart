@@ -1,229 +1,155 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
-import '../constants/app_colors.dart';
-import '../models/referral.dart';
-import '../services/referral_service.dart';
-import '../utils/error_handler.dart';
-import '../widgets/custom_button.dart';
+// File: lib/screens/referrals_screen.dart
 
-class ReferralsScreen extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../constants/app_colors.dart';
+import '../providers/user_provider.dart';
+
+class ReferralsScreen extends StatelessWidget {
   const ReferralsScreen({Key? key}) : super(key: key);
 
   @override
-  State<ReferralsScreen> createState() => _ReferralsScreenState();
-}
-
-class _ReferralsScreenState extends State<ReferralsScreen> {
-  bool _isLoading = true;
-  String _referralCode = '';
-  List<Referral> _referrals = [];
-  double _totalCommission = 0.0;
-  double _commissionRate = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadReferralData();
-  }
-
-  // Load referral data from the service
-  Future<void> _loadReferralData() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Get referral data from the service
-      final referralData = await ReferralService.getReferralData();
-      
-      setState(() {
-        _referralCode = referralData.referralCode;
-        _referrals = referralData.referrals;
-        _totalCommission = referralData.totalCommission;
-        _commissionRate = referralData.commissionRate;
-        _isLoading = false;
-      });
-    } catch (e, stackTrace) {
-      ErrorHandler.logError(e, stackTrace: stackTrace);
-      ErrorHandler.showErrorDialog(
-        context, 
-        'Failed to load referral data. Please try again.'
-      );
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  // Copy referral code to clipboard
-  void _copyReferralCode() {
-    Clipboard.setData(ClipboardData(text: _referralCode));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Referral code copied to clipboard!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  // Share referral code
-  void _shareReferralCode() {
-    Share.share(
-      'Join AI CoinBox using my referral code: $_referralCode and get started with P2P lending and investments!',
-      subject: 'Join AI CoinBox',
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Referrals'),
+        backgroundColor: AppColors.primaryBlue,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadReferralData,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Referral code card
-                      Card(
-                        elevation: 4,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Your Referral Code',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[200],
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        _referralCode,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.copy),
-                                    onPressed: _copyReferralCode,
-                                    tooltip: 'Copy to clipboard',
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              CustomButton(
-                                text: 'Share Referral Code',
-                                onPressed: _shareReferralCode,
-                                icon: Icons.share,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Commission information
-                      Card(
-                        elevation: 4,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Commission Information',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Your Commission Rate: ${(_commissionRate * 100).toStringAsFixed(0)}%',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Total Commission Earned: R${_totalCommission.toStringAsFixed(2)}',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Referrals list
-                      const Text(
-                        'Your Referrals',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _referrals.isEmpty
-                          ? const Card(
-                              child: Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Text(
-                                  'You haven\'t referred anyone yet. Share your referral code to start earning commissions!',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _referrals.length,
-                              itemBuilder: (context, index) {
-                                final referral = _referrals[index];
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  child: ListTile(
-                                    title: Text(referral.userName),
-                                    subtitle: Text(
-                                      'Joined: ${referral.joinDate}',
-                                    ),
-                                    trailing: Text(
-                                      'R${referral.commission.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.success,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                    ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Referral Code Card
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.primaryBlue, AppColors.primaryPurple],
                   ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your Referral Code',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      userProvider.referralCode.isNotEmpty
+                          ? userProvider.referralCode
+                          : 'N/A',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // TODO: Implement sharing functionality.
+                      },
+                      icon: const Icon(Icons.share, color: Colors.white),
+                      label: const Text('Share Referral Code'),
+                      style: ElevatedButton.styleFrom(
+                        primary: AppColors.success,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+            // Referral Stats Card
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildReferralStat('Total Referrals', userProvider.totalReferrals),
+                    _buildReferralStat('Commission Earned', 'R${userProvider.commissionBalance.toStringAsFixed(2)}'),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Leaderboard Header
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Top Referrers',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Leaderboard List
+            Expanded(
+              child: ListView.builder(
+                itemCount: userProvider.topReferrers.length,
+                itemBuilder: (context, index) {
+                  final referrer = userProvider.topReferrers[index];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: referrer.profileImageUrl.isNotEmpty
+                          ? NetworkImage(referrer.profileImageUrl)
+                          : const AssetImage('assets/images/user_placeholder.png') as ImageProvider,
+                    ),
+                    title: Text(referrer.fullName),
+                    subtitle: Text('Referrals: ${referrer.referralCount}'),
+                    trailing: Text(
+                      'R${referrer.commissionEarned.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReferralStat(String title, dynamic value) {
+    return Column(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$value',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
+        ),
+      ],
     );
   }
 }
