@@ -7,11 +7,14 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../providers/user_provider.dart';
 
+/// A premium header widget for the app that implements PreferredSizeWidget.
+/// It provides dynamic branding, navigation, search, and user account actions.
 class Header extends StatelessWidget implements PreferredSizeWidget {
   const Header({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Retrieve user authentication state from UserProvider.
     final userProvider = Provider.of<UserProvider>(context);
     final bool isLoggedIn = userProvider.isLoggedIn;
 
@@ -22,16 +25,18 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
       leading: IconButton(
         icon: const Icon(Icons.menu),
         onPressed: () {
+          // Open the custom navigation drawer.
           Scaffold.of(context).openDrawer();
         },
       ),
       title: InkWell(
         onTap: () {
+          // Navigate to the Home page when the logo or title is tapped.
           Navigator.pushNamed(context, '/home');
         },
         child: Row(
           children: [
-            // Display the high-quality SVG logo.
+            // Display the scalable SVG logo.
             SvgPicture.asset(
               'assets/images/CoinBoxLogo01.svg',
               height: 40,
@@ -50,14 +55,14 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        // Search functionality.
+        // Search icon with placeholder functionality.
         IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {
-            // TODO: Implement search functionality using SearchDelegate.
+            // TODO: Implement a custom SearchDelegate for dynamic search.
           },
         ),
-        // Conditional rendering based on user authentication.
+        // Account actions: if logged in, show a dropdown; else show Sign Up/Login buttons.
         isLoggedIn
             ? DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -65,27 +70,33 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
                   items: [
                     DropdownMenuItem(
                       value: 'wallet',
-                      child: Text('My Wallet (R${userProvider.profileData['walletBalance'] ?? 0})'),
+                      child: Text(
+                        'My Wallet (R${userProvider.profileData['walletBalance'] ?? 0})',
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ),
                     DropdownMenuItem(
                       value: 'commission',
-                      child: Text('Commission (R${userProvider.commissionBalance.toStringAsFixed(2)})'),
+                      child: Text(
+                        'Commission (R${userProvider.commissionBalance.toStringAsFixed(2)})',
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ),
                     const DropdownMenuItem(
                       value: 'buy_coins',
-                      child: Text('Buy Coins'),
+                      child: Text('Buy Coins', style: TextStyle(fontSize: 14)),
                     ),
                     const DropdownMenuItem(
                       value: 'transactions',
-                      child: Text('Transaction History'),
+                      child: Text('Transaction History', style: TextStyle(fontSize: 14)),
                     ),
                     const DropdownMenuItem(
                       value: 'settings',
-                      child: Text('Settings'),
+                      child: Text('Settings', style: TextStyle(fontSize: 14)),
                     ),
                     const DropdownMenuItem(
                       value: 'logout',
-                      child: Text('Logout'),
+                      child: Text('Logout', style: TextStyle(fontSize: 14)),
                     ),
                   ],
                   onChanged: (value) {
@@ -106,7 +117,7 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
                         Navigator.pushNamed(context, '/settings');
                         break;
                       case 'logout':
-                        // TODO: Implement proper logout functionality.
+                        // Implement logout functionality and navigate to auth screen.
                         Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
                         break;
                     }
