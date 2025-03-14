@@ -4,17 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
 import '../constants/app_colors.dart';
+import '../providers/user_provider.dart';
 
-class Header extends StatelessWidget with PreferredSizeWidget {
+class Header extends StatelessWidget implements PreferredSizeWidget {
   const Header({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    // Example: Determine authentication state (userProvider.isLoggedIn)
-    bool isLoggedIn = userProvider.isLoggedIn;
+    final bool isLoggedIn = userProvider.isLoggedIn;
 
     return AppBar(
       backgroundColor: Colors.white,
@@ -28,16 +27,14 @@ class Header extends StatelessWidget with PreferredSizeWidget {
       ),
       title: InkWell(
         onTap: () {
-          // Navigate to home page
           Navigator.pushNamed(context, '/home');
         },
         child: Row(
           children: [
-            // Use high-quality PNG or SVG for logo
+            // Display the high-quality SVG logo.
             SvgPicture.asset(
               'assets/images/CoinBoxLogo01.svg',
               height: 40,
-              // You can add semanticsLabel for accessibility:
               semanticsLabel: 'CoinBox Logo',
             ),
             const SizedBox(width: 10),
@@ -53,38 +50,82 @@ class Header extends StatelessWidget with PreferredSizeWidget {
         ),
       ),
       actions: [
-        // Search Icon with integrated SearchDelegate for dynamic search suggestions.
+        // Search functionality.
         IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {
-            showSearch(
-              context: context,
-              delegate: CustomSearchDelegate(), // Define CustomSearchDelegate separately.
-            );
+            // TODO: Implement search functionality using SearchDelegate.
           },
         ),
-        // Conditional account display
+        // Conditional rendering based on user authentication.
         isLoggedIn
-            ? _buildAccountDropdown(context, userProvider)
+            ? DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  icon: const Icon(Icons.account_circle, color: Colors.black),
+                  items: [
+                    DropdownMenuItem(
+                      value: 'wallet',
+                      child: Text('My Wallet (R${userProvider.profileData['walletBalance'] ?? 0})'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'commission',
+                      child: Text('Commission (R${userProvider.commissionBalance.toStringAsFixed(2)})'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'buy_coins',
+                      child: Text('Buy Coins'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'transactions',
+                      child: Text('Transaction History'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'settings',
+                      child: Text('Settings'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'logout',
+                      child: Text('Logout'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    switch (value) {
+                      case 'wallet':
+                        Navigator.pushNamed(context, '/wallet');
+                        break;
+                      case 'commission':
+                        Navigator.pushNamed(context, '/commission');
+                        break;
+                      case 'buy_coins':
+                        Navigator.pushNamed(context, '/buy_coins');
+                        break;
+                      case 'transactions':
+                        Navigator.pushNamed(context, '/transactions');
+                        break;
+                      case 'settings':
+                        Navigator.pushNamed(context, '/settings');
+                        break;
+                      case 'logout':
+                        // TODO: Implement proper logout functionality.
+                        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                        break;
+                    }
+                  },
+                ),
+              )
             : Row(
                 children: [
                   TextButton(
                     onPressed: () {
                       Navigator.pushNamed(context, '/signup');
                     },
-                    child: const Text(
-                      'Sign Up',
-                      style: TextStyle(color: AppColors.primaryBlue),
-                    ),
+                    child: const Text('Sign Up', style: TextStyle(color: AppColors.primaryBlue)),
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.pushNamed(context, '/login');
                     },
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(color: AppColors.primaryBlue),
-                    ),
+                    child: const Text('Login', style: TextStyle(color: AppColors.primaryBlue)),
                   ),
                 ],
               ),
@@ -92,118 +133,6 @@ class Header extends StatelessWidget with PreferredSizeWidget {
     );
   }
 
-  Widget _buildAccountDropdown(BuildContext context, var userProvider) {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        icon: const Icon(Icons.account_circle, color: Colors.black),
-        items: [
-          DropdownMenuItem(
-            value: 'wallet',
-            child: Text('My Wallet (R${userProvider.walletBalance.toStringAsFixed(2)})'),
-          ),
-          DropdownMenuItem(
-            value: 'commission',
-            child: Text('Commission (R${userProvider.commissionBalance.toStringAsFixed(2)})'),
-          ),
-          DropdownMenuItem(
-            value: 'buy_coins',
-            child: const Text('Buy Coins'),
-          ),
-          DropdownMenuItem(
-            value: 'transactions',
-            child: const Text('Transaction History'),
-          ),
-          DropdownMenuItem(
-            value: 'settings',
-            child: const Text('Settings'),
-          ),
-          DropdownMenuItem(
-            value: 'logout',
-            child: const Text('Logout'),
-          ),
-        ],
-        onChanged: (value) {
-          switch (value) {
-            case 'wallet':
-              Navigator.pushNamed(context, '/wallet');
-              break;
-            case 'commission':
-              Navigator.pushNamed(context, '/commission');
-              break;
-            case 'buy_coins':
-              Navigator.pushNamed(context, '/buy_coins');
-              break;
-            case 'transactions':
-              Navigator.pushNamed(context, '/transactions');
-              break;
-            case 'settings':
-              Navigator.pushNamed(context, '/settings');
-              break;
-            case 'logout':
-              // Implement logout functionality here
-              // Example: Provider.of<AuthService>(context, listen: false).signOut();
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-              break;
-          }
-        },
-      ),
-    );
-  }
-
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-}
-
-/// CustomSearchDelegate: Implements dynamic search suggestions.
-class CustomSearchDelegate extends SearchDelegate {
-  @override
-  List<Widget>? buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: const Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-        },
-      ),
-    ];
-  }
-
-  @override
-  Widget? buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null);
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    // Implement result display
-    return Center(child: Text('Search results for "$query"'));
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    // Implement suggestions; for now, we show a simple list
-    final suggestions = query.isEmpty
-        ? ['Invest', 'Borrow', 'Wallet', 'Transactions']
-        : ['Invest', 'Borrow', 'Wallet', 'Transactions']
-            .where((s) => s.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-
-    return ListView.builder(
-      itemCount: suggestions.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          title: Text(suggestions[index]),
-          onTap: () {
-            query = suggestions[index];
-            showResults(context);
-          },
-        );
-      },
-    );
-  }
 }

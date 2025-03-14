@@ -10,7 +10,7 @@ import '../providers/wallet_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/header.dart';
-import '../widgets/navigation_drawer.dart'; // Assuming you've separated drawer into its own widget.
+import 'package:ai_coinbox/widgets/custom_navigation_drawer.dart';
 import '../services/firebase_service.dart';
 import '../models/transaction.dart';
 
