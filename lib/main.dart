@@ -1,32 +1,11 @@
+// File: lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/services.dart';
+import 'my_app.dart'; // Make sure this file exists in the lib/ directory
 
-// Services
-import 'services/notification_service.dart';
-
-// Widgets
-import 'widgets/my_app.dart';
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  
-  // Initialize Firebase
-  try {
-    await Firebase.initializeApp();
-    print('Firebase initialized successfully');
-  } catch (e) {
-    print('Error initializing Firebase: $e');
-  }
-  
-  // Initialize Notification Service
-  await NotificationService().initialize();
-  
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
