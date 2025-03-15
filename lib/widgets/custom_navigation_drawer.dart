@@ -9,11 +9,11 @@ class CustomNavigationDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      // Remove any padding to let our custom header take full space.
+      // Using zero padding to let our custom header span full width.
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // Custom Drawer Header
+          // Drawer header with branding.
           DrawerHeader(
             decoration: const BoxDecoration(
               color: AppColors.primaryBlue,
@@ -21,7 +21,7 @@ class CustomNavigationDrawer extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App logo
+                // Display the logo (ensure this asset exists).
                 Image.asset(
                   'assets/images/CoinBoxLogo02.png',
                   height: 60,
@@ -38,7 +38,7 @@ class CustomNavigationDrawer extends StatelessWidget {
               ],
             ),
           ),
-          // Menu Items
+          // Navigation menu items.
           ListTile(
             leading: const Icon(Icons.home, color: AppColors.primaryBlue),
             title: const Text('Home'),
