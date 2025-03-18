@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_colors.dart';
 import '../../providers/admin_provider.dart'; // Ensure this file exists with required properties.
+import '../../models/user_role.dart'; // Import UserRole for role checking
+
 import '../../widgets/custom_navigation_drawer.dart';
 // Uncomment if you decide to use an alternative chart package later.
 // import '../../widgets/analytics_chart.dart';
@@ -18,8 +20,9 @@ class AdminDashboard extends StatelessWidget {
     final adminProvider = Provider.of<AdminProvider>(context);
 
     // RBAC: Only allow admin or superAdmin to access the dashboard.
-    if (adminProvider.currentUserRole != AdminUserRole.admin &&
-        adminProvider.currentUserRole != AdminUserRole.superAdmin) {
+    if (adminProvider.currentUserRole != UserRole.admin &&
+        adminProvider.currentUserRole != UserRole.superAdmin) {
+
       return Scaffold(
         appBar: AppBar(
           title: const Text("Access Denied"),

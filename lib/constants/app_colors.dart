@@ -8,6 +8,8 @@ class AppColors {
   static const Color primaryPurple = Color(0xFF5e17eb);
 
   // Status colors
+  static const Color warning = Color(0xFFFFA500); // Define warning color
+
   static const Color success = Color(0xFF4CAF50);
   static const Color error = Color(0xFFF44336);
 

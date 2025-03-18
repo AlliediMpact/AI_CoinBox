@@ -1,14 +1,20 @@
-// File: lib/services/notification_service.dart
-
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 
 class NotificationService {
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  static void showNotification(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
 
-  /// Initializes notification settings.
-  Future<void> initialize() async {
-    // WHY: Request permission and configure notifications.
-    await _messaging.requestPermission();
-    // Additional configuration (e.g., onMessage, onLaunch) can be added here.
+  static void notifyLoanApproval(BuildContext context) {
+    showNotification(context, 'Your loan has been approved!');
+  }
+
+  static void notifyInvestmentUpdate(BuildContext context) {
+    showNotification(context, 'Your investment has been updated!');
   }
 }

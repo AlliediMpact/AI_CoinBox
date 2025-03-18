@@ -1,11 +1,10 @@
-// File: lib/widgets/header.dart
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../providers/user_provider.dart';
+import '../services/notification_service.dart'; // Import the NotificationService
 
 /// A premium header widget for the app that implements PreferredSizeWidget.
 /// It provides dynamic branding, navigation, search, and user account actions.
@@ -55,6 +54,14 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
+        // Notification icon
+        IconButton(
+          icon: const Icon(Icons.notifications),
+          onPressed: () {
+            // Show notifications when clicked
+            NotificationService.showNotification(context, 'You have new notifications!');
+          },
+        ),
         // Search icon with placeholder functionality.
         IconButton(
           icon: const Icon(Icons.search),
