@@ -113,8 +113,9 @@ class _TradeScreenState extends State<TradeScreen> {
               },
               child: const Text('Invest'),
               style: ElevatedButton.styleFrom(
-                primary: AppColors.success,
+                backgroundColor: AppColors.success,
               ),
+
             ),
           ),
         );
@@ -144,8 +145,9 @@ class _TradeScreenState extends State<TradeScreen> {
               },
               child: const Text('Borrow'),
               style: ElevatedButton.styleFrom(
-                primary: AppColors.warning,
+                backgroundColor: AppColors.warning,
               ),
+
             ),
           ),
         );

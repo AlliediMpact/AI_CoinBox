@@ -1,11 +1,19 @@
-// File: lib/main.dart
-
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'my_app.dart'; // Ensure this file exists in the lib/ directory
+import 'package:provider/provider.dart';
+import 'providers/user_provider.dart';
+import 'providers/wallet_provider.dart';
+import 'providers/transaction_provider.dart';
+import 'my_app.dart'; // Import the MyApp class
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
+void main() {
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => WalletProvider()),
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }

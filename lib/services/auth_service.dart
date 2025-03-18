@@ -7,7 +7,12 @@ class AuthService {
 
   // Other authentication methods...
 
+  /// Signs out the currently signed-in user.
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
   /// Deletes the currently signed-in user's account.
+
   Future<void> deleteAccount() async {
     User? user = _auth.currentUser;
     if (user != null) {

@@ -44,8 +44,10 @@ class AuthenticationWrapper extends StatelessWidget {
     final walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
 
-    userProvider.update(userId);
-    walletProvider.update(userId);
-    transactionProvider.update(userId);
+    userProvider.setUser(FirebaseAuth.instance.currentUser); // Pass the User object instead of userId
+
+    walletProvider.refresh(); // Assuming refresh is the method to update wallet data
+    transactionProvider.loadTransactions(); // Assuming loadTransactions is the method to update transaction data
+
   }
 }
