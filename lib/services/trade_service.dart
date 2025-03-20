@@ -51,6 +51,35 @@ class TradeService {
     }
   }
 
+  /// Processes investment interest distribution.
+  static Future<void> distributeInvestmentInterest(String investmentId, double investmentAmount) async {
+    try {
+      // Calculate interest (20% per month)
+      double interest = investmentAmount * 0.20;
+
+      // Calculate amount to investor's wallet (5% of interest)
+      double investorWalletAmount = interest * 0.05;
+
+      // Calculate amount to investor's bank account (95% of interest)
+      double investorBankAccountAmount = interest - investorWalletAmount;
+
+      // Get investor's user ID from investment data
+      DocumentSnapshot investmentDoc = await FirebaseFirestore.instance.collection('investments').doc(investmentId).get();
+      String investorId = (investmentDoc.data() as Map<String, dynamic>)['userId'];
+
+      // Add interest to investor's wallet
+      await FirebaseFirestore.instance.collection('users').doc(investorId).update({
+        'walletBalance': FieldValue.increment(investorWalletAmount),
+      });
+
+      // TODO: Implement transfer to investor's bank account (using a payment gateway)
+      // For now, log the amount to be transferred
+      print('Transferring $investorBankAccountAmount to investor $investorId bank account');
+    } catch (e) {
+      throw Exception("Error distributing investment interest: $e");
+    }
+  }
+
   /// Retrieves the user's membership plan from Firestore.
   static Future<String> getUserMembershipPlan(String uid) async {
     try {

@@ -6,9 +6,12 @@ class WalletScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Wallet')),
-      body: Center(child: const Text('Wallet Screen')),
+      appBar: AppBar(
+        title: const Text('Wallet'),
+      ),
+      body: const Center(
+        child: Text('Welcome to the Wallet Screen!'),
+      ),
     );
   }
 }
-</create_file>

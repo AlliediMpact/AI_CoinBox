@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "290828526825",
+    "project_id": "coinbox-85b0f",
+    "storage_bucket": "coinbox-85b0f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:290828526825:android:d0a4741d5dd05b99b03c78",
+        "android_client_info": {
+          "package_name": "com.coinbox.coinbox"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBC7lfsbGaH3Wl56UQEsMKY30gkw7iNL0I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
