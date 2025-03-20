@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'providers/user_provider.dart';
-import 'providers/wallet_provider.dart';
-import 'providers/transaction_provider.dart';
-import 'my_app.dart'; // Import the MyApp class
+import 'package:firebase_core/firebase_core.dart';
+import 'my_app.dart';
+import 'firebase_options.dart'; // Import the generated file
 
-void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => WalletProvider()),
-        ChangeNotifierProvider(create: (_) => TransactionProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    runApp(const MyApp());
+  } catch (e) {
+    print('Firebase initialization error: $e');
+    // Optionally, display an error message to the user
+  }
 }

@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 
 class KYCProvider extends ChangeNotifier {
-  String _status = 'unverified'; // Initial status
+  bool _isVerified = false;
 
-  String get status => _status;
+  bool isVerified() => _isVerified;
 
-  void submitKYC(String documents) {
-    // Logic to submit KYC documents
-    // For now, we will simulate a successful submission
-    _status = 'verified';
+  // Method to submit KYC data
+  Future<void> submitKYC(Map<String, dynamic> kycData) async {
+    // This is a placeholder
+    await Future.delayed(Duration(seconds: 2)); // Simulate KYC processing
+    _isVerified = true;
     notifyListeners();
   }
 
-  bool isVerified() {
-    return _status == 'verified';
+  // Method to check KYC status
+  Future<bool> checkKYCStatus() async {
+    // This is a placeholder
+    await Future.delayed(Duration(seconds: 1));
+    return _isVerified;
   }
 }

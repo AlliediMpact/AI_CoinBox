@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'membership_provider.dart'; // Import MembershipTier enum
 import 'kyc_provider.dart'; // Import KYCProvider class
 import 'escrow.dart'; // Import Escrow class
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Define transaction types as an enum for type safety
 enum TransactionType {
@@ -70,6 +71,7 @@ class TransactionProvider extends ChangeNotifier {
   List<Transaction> get transactions => _transactions;
 
   MembershipTier _membershipTier = MembershipTier.basic; // Define membership tier
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Fetches transactions from the backend and handles loan requests.
   /// Currently, this method simulates data fetching with dummy data and includes loan management.
@@ -142,37 +144,55 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   /// Adds a new transaction or loan request to the list and notifies listeners.
-
-  void addTransaction(Transaction transaction) {
+  void addTransaction(Transaction transaction) async {
     if (transaction.type == TransactionType.loan) {
       if (!canTakeLoan(transaction.amount)) {
         throw Exception('Loan amount exceeds limit for current membership tier.');
       }
-      // Apply 25% repayment fee and 5% wallet allocation
+
+      // Apply 25% repayment fee
       double repaymentFee = transaction.amount * 0.25;
+
+      // Calculate amount to borrower's wallet (5% of repayment fee)
       double walletAllocation = repaymentFee * 0.05;
+
+      // Calculate amount to investor (95% of repayment fee)
       double investorAmount = repaymentFee - walletAllocation;
-      
-      // Update transaction details
-      transaction.amount -= repaymentFee;
-      transaction.description = 'Loan with repayment fee and wallet allocation';
+
+      // Update transaction amount (the actual loan amount given to the user)
+      // The transaction amount should not be reduced by the repayment fee
+      // transaction.amount -= repaymentFee; // This line is incorrect and should be removed
+
+      // Update transaction description
+      transaction.description =
+          'Loan taken with repayment fee. Repayment Fee: $repaymentFee, Wallet Allocation: $walletAllocation, Investor Amount: $investorAmount';
+
+      // Implement logic to transfer 'walletAllocation' to borrower's wallet
+      // Assuming you have a method to update the user's wallet balance
+      // and a way to identify the borrower and investor
+      String borrowerId = transaction.userId; // Assuming userId is the borrower's ID
+      await _updateUserWallet(borrowerId, walletAllocation); // Implement this method
+
+      // Implement logic to transfer 'investorAmount' to investor
+      String investorId = transaction.recipientId!; // Assuming recipientId is the investor's ID
+      await _transferToInvestor(investorId, investorAmount); // Implement this method
     }
-    
+
     if (transaction.type == TransactionType.investment && !canMakeInvestment(transaction.amount)) {
       throw Exception('Investment amount exceeds limit for current membership tier.');
     }
-    
+
     // Check KYC status before processing the transaction
     KYCProvider kycProvider = KYCProvider(); // Instantiate KYCProvider
 
     if (!kycProvider.isVerified()) {
-        throw Exception('User must be KYC verified to perform this transaction.');
+      throw Exception('User must be KYC verified to perform this transaction.');
     }
 
     // Integrate escrow system for transaction handling
     Escrow escrow = Escrow(id: transaction.id, initialAmount: transaction.amount);
     escrow.deposit(transaction.amount);
-    
+
     _transactions.add(transaction);
     transaction.amount = escrow.amount; // Update transaction amount to reflect escrow
 
@@ -203,6 +223,75 @@ class TransactionProvider extends ChangeNotifier {
         return amount <= 50000.0;
       case MembershipTier.business:
         return amount <= 100000.0;
+    }
+  }
+
+  // Add a method to process loan repayment
+  Future<void> processLoanRepayment(Transaction loanTransaction) async {
+    if (loanTransaction.type != TransactionType.loan) {
+      throw Exception('Invalid transaction type. Expected loan repayment.');
+    }
+
+    // Calculate repayment fee (25%)
+    double repaymentFee = loanTransaction.amount * 0.25;
+
+    // Calculate amount to borrower's wallet (5% of repayment fee)
+    double borrowerWalletAmount = repaymentFee * 0.05;
+
+    // Calculate amount to investor (95% of repayment fee)
+    double investorAmount = repaymentFee - borrowerWalletAmount;
+
+    // Update escrow - DEPOSIT the repayment fee
+    Escrow escrow = Escrow(id: loanTransaction.id, initialAmount: loanTransaction.amount);
+    escrow.deposit(repaymentFee); // Deposit the REPAYMENT FEE
+
+    // Create transactions for repayment fee distribution
+    Transaction borrowerWalletTransaction = Transaction(
+      id: DateTime.now().toString(),
+      userId: loanTransaction.userId,
+      amount: borrowerWalletAmount,
+      description: 'Loan repayment - Borrower wallet',
+      type: TransactionType.commission,
+      date: DateTime.now(),
+      status: 'completed',
+    );
+
+    Transaction investorTransaction = Transaction(
+      id: DateTime.now().toString(),
+      userId: loanTransaction.userId,
+      amount: investorAmount,
+      description: 'Loan repayment - Investor',
+      type: TransactionType.transfer,
+      date: DateTime.now(),
+      status: 'completed',
+    );
+
+    // Add transactions to the list
+    _transactions.add(borrowerWalletTransaction);
+    _transactions.add(investorTransaction);
+
+    notifyListeners();
+  }
+
+  // Method to update user wallet balance
+  Future<void> _updateUserWallet(String userId, double amount) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'walletBalance': FieldValue.increment(amount),
+      });
+    } catch (e) {
+      throw Exception('Error updating user wallet: $e');
+    }
+  }
+
+  // Method to transfer amount to investor
+  Future<void> _transferToInvestor(String investorId, double amount) async {
+    try {
+      await _firestore.collection('users').doc(investorId).update({
+        'accountBalance': FieldValue.increment(amount),
+      });
+    } catch (e) {
+      throw Exception('Error transferring amount to investor: $e');
     }
   }
 }

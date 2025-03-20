@@ -67,7 +67,7 @@ class ReferralsScreen extends StatelessWidget {
                       icon: const Icon(Icons.share, color: Colors.white),
                       label: const Text('Share Referral Code'),
                       style: ElevatedButton.styleFrom(
-                        primary: AppColors.success,
+                        backgroundColor: AppColors.success,
                       ),
                     ),
                   ],
