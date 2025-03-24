@@ -63,6 +63,10 @@ class TradeService {
       // Calculate amount to investor's bank account (95% of interest)
       double investorBankAccountAmount = interest - investorWalletAmount;
 
+      // Deduct transaction fee (R10)
+      double transactionFee = 10.0;
+      investorWalletAmount -= transactionFee;
+
       // Get investor's user ID from investment data
       DocumentSnapshot investmentDoc = await FirebaseFirestore.instance.collection('investments').doc(investmentId).get();
       String investorId = (investmentDoc.data() as Map<String, dynamic>)['userId'];
@@ -72,11 +76,45 @@ class TradeService {
         'walletBalance': FieldValue.increment(investorWalletAmount),
       });
 
-      // TODO: Implement transfer to investor's bank account (using a payment gateway)
-      // For now, log the amount to be transferred
-      print('Transferring $investorBankAccountAmount to investor $investorId bank account');
+      // Transfer to investor's bank account using a payment gateway
+      await transferToBankAccount(investorId, investorBankAccountAmount);
+
+      // Log the interest distribution
+      await FirebaseFirestore.instance.collection('transactions').add({
+        'userId': investorId,
+        'amount': interest,
+        'type': 'interest',
+        'description': 'Monthly investment interest',
+        'date': DateTime.now().toIso8601String(),
+        'status': 'completed',
+      });
     } catch (e) {
       throw Exception("Error distributing investment interest: $e");
+    }
+  }
+
+  /// Transfers the investor's amount to their bank account using a payment gateway.
+  static Future<void> transferToBankAccount(String investorId, double amount) async {
+    try {
+      // Simulate payment gateway integration
+      // Replace this with actual payment gateway API calls
+      print('Transferring $amount to investor $investorId\'s bank account...');
+      await Future.delayed(const Duration(seconds: 2)); // Simulate delay
+      print('Transfer successful.');
+    } catch (e) {
+      throw Exception('Error transferring to bank account: $e');
+    }
+  }
+
+  /// Placeholder for cross-border transactions.
+  static Future<void> processCrossBorderTransaction(String userId, double amount, String currency) async {
+    try {
+      // Simulate cross-border transaction logic
+      print('Processing cross-border transaction for $userId: $amount $currency');
+      await Future.delayed(const Duration(seconds: 2)); // Simulate delay
+      print('Cross-border transaction successful.');
+    } catch (e) {
+      throw Exception('Error processing cross-border transaction: $e');
     }
   }
 

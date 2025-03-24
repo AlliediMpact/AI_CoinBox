@@ -26,21 +26,7 @@ class ReferralService {
       final referralCode = userData['referralCode'] ?? '';
 
       // Determine commission rate based on membership plan
-      double commissionRate = 0.01; // Default to 1%
-      switch (membershipPlan) {
-        case 'basic':
-          commissionRate = 0.01; // 1%
-          break;
-        case 'ambassador':
-          commissionRate = 0.02; // 2%
-          break;
-        case 'vip':
-          commissionRate = 0.03; // 3%
-          break;
-        case 'business':
-          commissionRate = 0.05; // 5%
-          break;
-      }
+      double commissionRate = getCommissionRate(membershipPlan);
 
       // Get referrals where this user is the referrer
       final referralsSnapshot = await _firestore
@@ -113,21 +99,7 @@ class ReferralService {
       final membershipPlan = referrerData['membershipPlan'] ?? 'basic';
 
       // Determine commission rate based on membership plan
-      double commissionRate = 0.01; // Default to 1%
-      switch (membershipPlan) {
-        case 'basic':
-          commissionRate = 0.01; // 1%
-          break;
-        case 'ambassador':
-          commissionRate = 0.02; // 2%
-          break;
-        case 'vip':
-          commissionRate = 0.03; // 3%
-          break;
-        case 'business':
-          commissionRate = 0.05; // 5%
-          break;
-      }
+      double commissionRate = getCommissionRate(membershipPlan);
 
       // Create a new referral record
       await _firestore.collection('referrals').add({
@@ -150,7 +122,7 @@ class ReferralService {
     }
   }
 
-  // Update commission when a referred user makes a transaction
+  /// Update commission when a referred user makes a transaction.
   static Future<void> updateCommission(String userId, double transactionAmount) async {
     try {
       // Get the user to find who referred them
@@ -178,21 +150,7 @@ class ReferralService {
       final membershipPlan = referrerData['membershipPlan'] ?? 'basic';
 
       // Determine commission rate based on membership plan
-      double commissionRate = 0.01; // Default to 1%
-      switch (membershipPlan) {
-        case 'basic':
-          commissionRate = 0.01; // 1%
-          break;
-        case 'ambassador':
-          commissionRate = 0.02; // 2%
-          break;
-        case 'vip':
-          commissionRate = 0.03; // 3%
-          break;
-        case 'business':
-          commissionRate = 0.05; // 5%
-          break;
-      }
+      double commissionRate = getCommissionRate(membershipPlan);
 
       // Calculate commission amount
       final commissionAmount = transactionAmount * commissionRate;
@@ -234,6 +192,19 @@ class ReferralService {
           'date': DateTime.now().toIso8601String(),
           'status': 'completed',
         });
+
+        // Log the referral commission as a transaction
+        await _firestore.collection('transactions').add({
+          'userId': referredBy,
+          'amount': commissionAmount,
+          'type': 'commission',
+          'description': 'Referral commission',
+          'date': DateTime.now().toIso8601String(),
+          'status': 'completed',
+        });
+
+        // Notify the referrer about the commission
+        print('Referral commission of $commissionAmount added to $referredBy.');
       }
     } catch (e, stackTrace) {
       ErrorHandler.logError(e, stackTrace: stackTrace);
@@ -254,6 +225,41 @@ class ReferralService {
     } catch (e, stackTrace) {
       ErrorHandler.logError(e, stackTrace: stackTrace);
       return false;
+    }
+  }
+
+  /// Tracks a new referral and updates the referrer's referral count.
+  Future<void> trackReferral(String referrerId, String referredUserId) async {
+    try {
+      // Add referral record
+      await _firestore.collection('referrals').add({
+        'referrerId': referrerId,
+        'referredUserId': referredUserId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Increment the referrer's total referral count
+      await _firestore.collection('users').doc(referrerId).update({
+        'totalReferrals': FieldValue.increment(1),
+      });
+    } catch (e) {
+      throw Exception('Error tracking referral: $e');
+    }
+  }
+
+  /// Returns the commission rate based on the membership plan.
+  static double getCommissionRate(String membershipPlan) {
+    switch (membershipPlan.toLowerCase()) {
+      case 'basic':
+        return 0.01; // 1%
+      case 'ambassador':
+        return 0.02; // 2%
+      case 'vip':
+        return 0.03; // 3%
+      case 'business':
+        return 0.05; // 5%
+      default:
+        return 0.01; // Default to 1%
     }
   }
 }

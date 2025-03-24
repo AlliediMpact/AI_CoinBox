@@ -173,7 +173,7 @@ class ErrorHandler {
   ) {
     logError(error, stackTrace: stackTrace, hint: 'Transaction Error');
     
-    String message = 'An error occurred while processing your transaction. Please try again.';
+    String message = 'An error occurred while processing your transaction.';
     
     // You can add more specific error messages based on the error type
     if (error.toString().contains('insufficient-funds')) {
