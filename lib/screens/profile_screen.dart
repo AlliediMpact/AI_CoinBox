@@ -21,9 +21,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    _fullName = userProvider.fullName;
-    _email = userProvider.email;
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      setState(() {
+        _fullName = userProvider.fullName;
+        _email = userProvider.email;
+      });
+    } catch (e) {
+      print('Error loading profile data: $e');
+      // Handle the error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error loading profile data: ${e.toString()}")),
+      );
+    }
   }
 
   Future<void> _updateProfile() async {

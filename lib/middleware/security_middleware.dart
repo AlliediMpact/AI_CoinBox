@@ -10,11 +10,17 @@ class SecurityMiddleware {
       await SecurityService.updateLastActivity();
       
       // Check if session has timed out
-      final hasTimedOut = await SecurityService.hasSessionTimedOut();
-      if (hasTimedOut) {
-        // Show session timeout dialog
-        _showSessionTimeoutDialog(context);
-        return true;
+      try {
+        final hasTimedOut = await SecurityService.hasSessionTimedOut();
+        if (hasTimedOut) {
+          print('Session timed out.');
+          _showSessionTimeoutDialog(context);
+          return true;
+        }
+      } catch (e, stackTrace) {
+        print('Error checking session timeout: $e');
+        ErrorHandler.logError(e, stackTrace: stackTrace, hint: 'Session Timeout Error');
+        return false;
       }
       
       return false;

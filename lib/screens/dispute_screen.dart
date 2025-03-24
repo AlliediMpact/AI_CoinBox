@@ -83,40 +83,24 @@ class _DisputeScreenState extends State<DisputeScreen> {
 
   // Function to resolve a dispute
   void _resolveDispute(BuildContext context, Transaction transaction, bool releaseToRecipient) async {
-    // Access the TransactionProvider
-    TransactionProvider transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+    try {
+      TransactionProvider transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+      await transactionProvider.resolveDispute(transaction.id, releaseToRecipient);
 
-    // Find the transaction
-    Transaction? foundTransaction = transactionProvider.transactions.firstWhere((t) => t.id == transaction.id);
-
-    if (foundTransaction != null) {
-      // Resolve the dispute
-      Escrow escrow = Escrow(id: transaction.id, amount: transaction.amount, senderId: transaction.userId, recipientId: transaction.recipientId ?? '');
-      try {
-        await escrow.resolveDispute(releaseToRecipient, transactionProvider._updateUserWallet);
-
-        // Update the transaction status or remove the transaction from the list
-        setState(() {
-          transactionProvider.loadTransactions();
-        });
-
-        // Show a confirmation message
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Dispute resolved.')));
-      } catch (e) {
-        // Show an error message
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error resolving dispute: $e')));
-      }
-    } else {
-      // Show an error message if the transaction is not found
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Transaction not found.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Dispute resolved successfully.')),
+      );
+    } catch (e) {
+      print('Error resolving dispute: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error resolving dispute: $e')),
+      );
     }
   }
 
-
   // Function to check if the user is an admin
   bool _isAdmin(BuildContext context) {
-    // TODO: Implement logic to check if the user is an admin
-    // This is a placeholder
-    return true; // Replace with actual admin check
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    return userProvider.isAdmin; // Assuming `isAdmin` is a property in UserProvider
   }
 }

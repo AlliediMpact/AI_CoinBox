@@ -13,11 +13,13 @@ import 'screens/transaction_history_screen.dart'; // Import TransactionHistorySc
 import 'screens/profile_screen.dart'; // Import ProfileScreen
 import 'screens/referrals_screen.dart'; // Import ReferralsScreen
 import 'screens/settings_screen.dart'; // Import SettingsScreen
+import 'screens/onboarding_screen.dart'; // Import OnboardingScreen
+import 'screens/splash_screen.dart'; // Import SplashScreen
+import 'screens/paystack_test_screen.dart'; // Import the test screen
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // Build overall app theme and routing
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -45,16 +47,28 @@ class MyApp extends StatelessWidget {
           ),
           fontFamily: 'Roboto',
         ),
-        initialRoute: '/',
+        initialRoute: '/splash', // Ensure this matches a valid route
         routes: {
-          '/': (context) => const AuthScreen(), // Start with authentication
+          '/splash': (context) => const SplashScreen(),
+          '/auth': (context) => const AuthScreen(),
           '/home': (context) => const HomeScreen(),
           '/wallet': (context) => const WalletScreen(),
           '/trade': (context) => const TradeScreen(),
-          '/transaction_history': (context) => const TransactionHistoryScreen(), // Ensure this route is defined
+          '/transaction_history': (context) => const TransactionHistoryScreen(),
           '/profile': (context) => const ProfileScreen(),
           '/referrals': (context) => const ReferralsScreen(),
+          '/onboarding': (context) => const OnboardingScreen(),
           '/settings': (context) => const SettingsScreen(),
+          '/paystack_test': (context) => const PaystackTestScreen(),
+        },
+        onUnknownRoute: (settings) {
+          return MaterialPageRoute(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: Text('Unknown route: ${settings.name}'),
+              ),
+            ),
+          );
         },
       ),
     );

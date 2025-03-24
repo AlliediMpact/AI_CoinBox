@@ -3,6 +3,9 @@ import 'membership_provider.dart'; // Import MembershipTier enum
 import 'kyc_provider.dart'; // Import KYCProvider class
 import 'escrow.dart'; // Import Escrow class
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'user_provider.dart'; // Import UserProvider
+import 'wallet_provider.dart'; // Import WalletProvider
+import 'package:collection/collection.dart'; // Import the collection package
 
 // Define transaction types as an enum for type safety
 enum TransactionType {
@@ -77,70 +80,77 @@ class TransactionProvider extends ChangeNotifier {
   /// Currently, this method simulates data fetching with dummy data and includes loan management.
 
   Future<void> loadTransactions() async {
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+    try {
+      print('Loading transactions...');
+      await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
 
-    // Dummy data for demonstration purposes, including loan transactions.
+      // Dummy data for demonstration purposes, including loan transactions.
 
-    _transactions = [
-      Transaction(
-        // Loan transaction example
-        id: 'txn4',
-        userId: 'user1',
-        amount: 500.0,
-        description: 'Loan taken',
-        date: DateTime.now().subtract(const Duration(days: 4)),
-        type: TransactionType.loan,
-        status: 'completed',
-      ),
-      Transaction(
-        id: 'txn5',
-        userId: 'user1',
-        amount: 1000.0,
-        description: 'Investment in real estate',
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        type: TransactionType.investment,
-        status: 'completed',
-      ),
-      Transaction(
-        id: 'txn6',
-        userId: 'user1',
-        amount: 150.0,
-        description: 'Investment in bonds',
-        date: DateTime.now().subtract(const Duration(days: 1)),
-        type: TransactionType.investment,
-        status: 'completed',
-      ),
-      Transaction(
-        id: 'txn7',
-        userId: 'user1',
-        amount: 100.0,
-        description: 'Investment in stocks',
-        date: DateTime.now().subtract(const Duration(days: 1)),
-        type: TransactionType.investment,
-        status: 'completed',
-      ),
-      Transaction(
-        id: 'txn8',
-        userId: 'user1',
-        amount: 50.0,
-        description: 'Loan repayment',
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        type: TransactionType.loan,
-        status: 'completed',
-      ),
-      Transaction(
-        id: 'txn9',
-        userId: 'user1',
-        amount: 20.0,
-        description: 'Commission earned',
-        date: DateTime.now().subtract(const Duration(days: 3)),
-        type: TransactionType.commission,
-        status: 'completed',
-      ),
-    ];
+      _transactions = [
+        Transaction(
+          // Loan transaction example
+          id: 'txn4',
+          userId: 'user1',
+          amount: 500.0,
+          description: 'Loan taken',
+          date: DateTime.now().subtract(const Duration(days: 4)),
+          type: TransactionType.loan,
+          status: 'completed',
+        ),
+        Transaction(
+          id: 'txn5',
+          userId: 'user1',
+          amount: 1000.0,
+          description: 'Investment in real estate',
+          date: DateTime.now().subtract(const Duration(days: 2)),
+          type: TransactionType.investment,
+          status: 'completed',
+        ),
+        Transaction(
+          id: 'txn6',
+          userId: 'user1',
+          amount: 150.0,
+          description: 'Investment in bonds',
+          date: DateTime.now().subtract(const Duration(days: 1)),
+          type: TransactionType.investment,
+          status: 'completed',
+        ),
+        Transaction(
+          id: 'txn7',
+          userId: 'user1',
+          amount: 100.0,
+          description: 'Investment in stocks',
+          date: DateTime.now().subtract(const Duration(days: 1)),
+          type: TransactionType.investment,
+          status: 'completed',
+        ),
+        Transaction(
+          id: 'txn8',
+          userId: 'user1',
+          amount: 50.0,
+          description: 'Loan repayment',
+          date: DateTime.now().subtract(const Duration(days: 2)),
+          type: TransactionType.loan,
+          status: 'completed',
+        ),
+        Transaction(
+          id: 'txn9',
+          userId: 'user1',
+          amount: 20.0,
+          description: 'Commission earned',
+          date: DateTime.now().subtract(const Duration(days: 3)),
+          type: TransactionType.commission,
+          status: 'completed',
+        ),
+      ];
 
-    // Notify listeners about the updated data.
-    notifyListeners();
+      print('Transactions loaded successfully.');
+      // Notify listeners about the updated data.
+      notifyListeners();
+    } catch (e) {
+      print('Error loading transactions: $e');
+      throw Exception('Failed to load transactions.');
+    }
   }
 
   /// Adds a new transaction or loan request to the list and notifies listeners.
@@ -159,23 +169,21 @@ class TransactionProvider extends ChangeNotifier {
       // Calculate amount to investor (95% of repayment fee)
       double investorAmount = repaymentFee - walletAllocation;
 
-      // Update transaction amount (the actual loan amount given to the user)
-      // The transaction amount should not be reduced by the repayment fee
-      // transaction.amount -= repaymentFee; // This line is incorrect and should be removed
+      // Deduct transaction fee (R10)
+      double transactionFee = 10.0;
+      transaction.amount -= transactionFee;
 
       // Update transaction description
       transaction.description =
-          'Loan taken with repayment fee. Repayment Fee: $repaymentFee, Wallet Allocation: $walletAllocation, Investor Amount: $investorAmount';
+          'Loan taken with repayment fee. Repayment Fee: $repaymentFee, Wallet Allocation: $walletAllocation, Investor Amount: $investorAmount, Transaction Fee: $transactionFee';
 
-      // Implement logic to transfer 'walletAllocation' to borrower's wallet
-      // Assuming you have a method to update the user's wallet balance
-      // and a way to identify the borrower and investor
+      // Transfer walletAllocation to borrower's wallet
       String borrowerId = transaction.userId; // Assuming userId is the borrower's ID
-      await _updateUserWallet(borrowerId, walletAllocation); // Implement this method
+      await _updateUserWallet(borrowerId, walletAllocation);
 
-      // Implement logic to transfer 'investorAmount' to investor
+      // Transfer investorAmount to investor
       String investorId = transaction.recipientId!; // Assuming recipientId is the investor's ID
-      await _transferToInvestor(investorId, investorAmount); // Implement this method
+      await _transferToInvestor(investorId, investorAmount);
     }
 
     if (transaction.type == TransactionType.investment && !canMakeInvestment(transaction.amount)) {
@@ -190,8 +198,30 @@ class TransactionProvider extends ChangeNotifier {
     }
 
     // Integrate escrow system for transaction handling
-    Escrow escrow = Escrow(id: transaction.id, initialAmount: transaction.amount);
+    Escrow escrow = Escrow(
+      id: transaction.id,
+      initialAmount: transaction.amount,
+    );
     escrow.deposit(transaction.amount);
+
+    // Deduct transaction fee (R10) for all user-initiated transactions
+    if (transaction.type != TransactionType.commission) {
+      double transactionFee = 10.0;
+      transaction.amount -= transactionFee;
+
+      // Log the transaction fee as a separate transaction
+      Transaction feeTransaction = Transaction(
+        id: DateTime.now().toString(),
+        userId: transaction.userId,
+        amount: transactionFee,
+        description: 'Transaction fee',
+        type: TransactionType.fee,
+        date: DateTime.now(),
+        status: 'completed',
+      );
+
+      _transactions.add(feeTransaction);
+    }
 
     _transactions.add(transaction);
     transaction.amount = escrow.amount; // Update transaction amount to reflect escrow
@@ -293,5 +323,155 @@ class TransactionProvider extends ChangeNotifier {
     } catch (e) {
       throw Exception('Error transferring amount to investor: $e');
     }
+  }
+
+  // Add methods to handle administration fees and refundable security deposits
+  Future<void> handleMembershipFees(String userId, double securityFee, double adminFee) async {
+    try {
+      // Deduct administration fee
+      await _firestore.collection('users').doc(userId).update({
+        'walletBalance': FieldValue.increment(-adminFee),
+      });
+
+      // Store refundable security deposit
+      await _firestore.collection('users').doc(userId).update({
+        'refundableDeposit': FieldValue.increment(securityFee),
+      });
+    } catch (e) {
+      throw Exception('Error handling membership fees: $e');
+    }
+  }
+
+  /// Adds a referral commission for the referrer.
+  Future<void> addReferralCommission(String referrerId, double transactionAmount) async {
+    try {
+      // Get the referrer's membership tier
+      DocumentSnapshot referrerDoc = await _firestore.collection('users').doc(referrerId).get();
+      String membershipTier = (referrerDoc.data() as Map<String, dynamic>)['membershipTier'] ?? 'basic';
+
+      // Determine commission rate based on membership tier
+      double commissionRate;
+      switch (membershipTier) {
+        case 'basic':
+          commissionRate = 0.01; // 1%
+          break;
+        case 'ambassador':
+          commissionRate = 0.02; // 2%
+          break;
+        case 'vip':
+          commissionRate = 0.03; // 3%
+          break;
+        case 'business':
+          commissionRate = 0.05; // 5%
+          break;
+        default:
+          commissionRate = 0.01; // Default to 1%
+      }
+
+      // Calculate commission
+      double commission = transactionAmount * commissionRate;
+
+      // Update referrer's wallet balance
+      await _firestore.collection('users').doc(referrerId).update({
+        'walletBalance': FieldValue.increment(commission),
+      });
+
+      // Log the referral commission as a transaction
+      Transaction commissionTransaction = Transaction(
+        id: DateTime.now().toString(),
+        userId: referrerId,
+        amount: commission,
+        description: 'Referral commission earned',
+        type: TransactionType.commission,
+        date: DateTime.now(),
+        status: 'completed',
+      );
+
+      _transactions.add(commissionTransaction);
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Error adding referral commission: $e');
+    }
+  }
+
+  /// Rewards top-performing referrers with bonuses.
+  Future<void> rewardTopReferrers() async {
+    try {
+      // Query top referrers based on referral count or total commission earned
+      QuerySnapshot topReferrers = await _firestore
+          .collection('users')
+          .orderBy('totalReferrals', descending: true)
+          .limit(5)
+          .get();
+
+      for (var referrer in topReferrers.docs) {
+        String referrerId = referrer.id;
+
+        // Reward bonus (e.g., R100 for top referrers)
+        double bonusAmount = 100.0;
+        await _firestore.collection('users').doc(referrerId).update({
+          'walletBalance': FieldValue.increment(bonusAmount),
+        });
+
+        // Log the bonus as a transaction
+        Transaction bonusTransaction = Transaction(
+          id: DateTime.now().toString(),
+          userId: referrerId,
+          amount: bonusAmount,
+          description: 'Top referrer bonus',
+          type: TransactionType.commission,
+          date: DateTime.now(),
+          status: 'completed',
+        );
+
+        _transactions.add(bonusTransaction);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Error rewarding top referrers: $e');
+    }
+  }
+
+  /// Handles disputes for transactions.
+  Future<void> resolveDispute(String transactionId, bool releaseToRecipient) async {
+    try {
+      // Find the transaction in the list
+      Transaction? disputedTransaction = _transactions.firstWhereOrNull(
+        (t) => t.id == transactionId,
+      );
+
+      if (disputedTransaction == null) {
+        throw Exception('Transaction not found');
+      }
+
+      // Update escrow status based on resolution
+      Escrow escrow = Escrow(
+        id: disputedTransaction.id,
+        initialAmount: disputedTransaction.amount,
+      );
+
+      if (releaseToRecipient) {
+        escrow.release(disputedTransaction.amount.toString());
+      } else {
+        escrow.refund();
+      }
+
+      // Update transaction description
+      disputedTransaction.description = releaseToRecipient
+          ? 'Resolved in favor of recipient'
+          : 'Resolved in favor of sender';
+      print('Dispute resolved for transaction: $transactionId');
+      notifyListeners();
+    } catch (e) {
+      print('Error resolving dispute: $e');
+      throw Exception('Failed to resolve dispute.');
+    }
+  }
+
+  /// Sets the membership tier for the user.
+  void setMembershipTier(MembershipTier tier) {
+    _membershipTier = tier;
+    notifyListeners();
   }
 }

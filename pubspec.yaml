@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # Base
+  collection: ^1.17.0
   
   # UI
   cupertino_icons: ^1.0.8
@@ -38,9 +41,10 @@ dependencies:
 
   # Payments
   flutter_stripe: ^9.6.0
+  paystack_standard: ^0.0.8
 
   # Networking & Data
-  http: ^1.2.1
+  http: ^0.13.6
   intl: ^0.17.0
   shared_preferences: ^2.2.2
   path_provider: ^2.1.2
@@ -48,7 +52,6 @@ dependencies:
   # Charts & Visualization
   fl_chart: ^0.66.0
   charts_flutter: ^0.12.0
-
 
   # Utilities
   url_launcher: ^6.2.4
@@ -63,6 +66,7 @@ dev_dependencies:
   flutter_lints: ^2.0.0
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.3.10
+  mockito: ^5.0.0
 
 flutter:
   uses-material-design: true
@@ -71,6 +75,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/animations/
+    - assets/CoinBoxLogo01.svg
     
   fonts:
     - family: Roboto
