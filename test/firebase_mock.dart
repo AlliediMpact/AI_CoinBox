@@ -24,10 +24,10 @@ class MockFirebaseCore extends FirebasePlatform {
 
 class MockFirebaseApp extends FirebaseAppPlatform {
   MockFirebaseApp() : super(name: 'MockApp', options: const FirebaseOptions( // Correct super constructor
-        apiKey: 'mockApiKey',
-        appId: 'mockAppId',
-        messagingSenderId: 'mockSenderId',
-        projectId: 'mockProjectId',
+        apiKey: 'fakeApiKey',
+        appId: 'fakeAppId',
+        messagingSenderId: 'fakeSenderId',
+        projectId: 'fakeProjectId',
       ));
 
   @override
