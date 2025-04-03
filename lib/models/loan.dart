@@ -1,70 +1,79 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/firebase_service.dart';
+
+enum LoanStatus { pending, approved, active, completed, defaulted, rejected }
 
 class Loan {
-  final String? id;
-  final String userId;
+  final String id;
+  final String borrowerId;
+  final String? lenderId;
   final double amount;
-  final String status;
-  final DateTime createdAt;
-  final DateTime repaymentDate;
-  final double repaymentFee;
-  final String? tradeId;
-  final String? investmentId;
-  final DateTime? matchedAt;
+  final double repaymentAmount;
+  final DateTime requestDate;
+  final DateTime? dueDate;
+  final LoanStatus status;
+  final double interestRate;
+  final Map<String, dynamic>? metadata;
 
   Loan({
-    this.id,
-    required this.userId,
+    required this.id,
+    required this.borrowerId,
+    this.lenderId,
     required this.amount,
+    required this.repaymentAmount,
+    required this.requestDate,
+    this.dueDate,
     required this.status,
-    required this.createdAt,
-    required this.repaymentDate,
-    required this.repaymentFee,
-    this.tradeId,
-    this.investmentId,
-    this.matchedAt,
+    this.interestRate = 0.25, // 25% as per business logic
+    this.metadata,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'userId': userId,
-      'amount': amount,
-      'status': status,
-      'createdAt': createdAt.toIso8601String(),
-      'repaymentDate': repaymentDate.toIso8601String(),
-      'repaymentFee': repaymentFee,
-      'tradeId': tradeId,
-      'investmentId': investmentId,
-      'matchedAt': matchedAt?.toIso8601String(),
-    };
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'borrowerId': borrowerId,
+        'lenderId': lenderId,
+        'amount': amount,
+        'repaymentAmount': repaymentAmount,
+        'requestDate': Timestamp.fromDate(requestDate),
+        'dueDate': dueDate != null ? Timestamp.fromDate(dueDate!) : null,
+        'status': status.toString(),
+        'interestRate': interestRate,
+        'metadata': metadata,
+      };
+
+  static Loan fromJson(Map<String, dynamic> json) => Loan(
+        id: json['id'],
+        borrowerId: json['borrowerId'],
+        lenderId: json['lenderId'],
+        amount: json['amount'],
+        repaymentAmount: json['repaymentAmount'],
+        requestDate: (json['requestDate'] as Timestamp).toDate(),
+        dueDate: json['dueDate'] != null
+            ? (json['dueDate'] as Timestamp).toDate()
+            : null,
+        status: LoanStatus.values
+            .firstWhere((e) => e.toString() == json['status']),
+        interestRate: json['interestRate'],
+        metadata: json['metadata'],
+      );
+
+  DateTime calculateDueDate(int loanTermInDays) {
+    return requestDate.add(Duration(days: loanTermInDays));
   }
 
-  static Future<void> create(Loan loan) async {
-    await FirebaseService.firestore
-        .collection('loans')
-        .add(loan.toMap());
-  }
+  // Ensure KYC verification before loan approval
+  static Future<void> approveLoan(String loanId) async {
+    final loanDoc = await FirebaseFirestore.instance.collection('loans').doc(loanId).get();
+    if (!loanDoc.exists) throw Exception('Loan not found');
 
-  static Stream<QuerySnapshot> getLoansByUser(String userId) {
-    return FirebaseService.firestore
-        .collection('loans')
-        .where('userId', isEqualTo: userId)
-        .snapshots();
-  }
+    final loan = Loan.fromJson(loanDoc.data()!);
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(loan.borrowerId).get();
 
-  factory Loan.fromMap(Map<String, dynamic> map, String id) {
-    return Loan(
-      id: id,
-      userId: map['userId'],
-      amount: map['amount'],
-      status: map['status'],
-      createdAt: DateTime.parse(map['createdAt']),
-      repaymentDate: DateTime.parse(map['repaymentDate']),
-      repaymentFee: map['repaymentFee'],
-      tradeId: map['tradeId'],
-      investmentId: map['investmentId'],
-      matchedAt: map['matchedAt'] != null ? DateTime.parse(map['matchedAt']) : null,
-    );
+    if (userDoc.data()?['kycStatus'] != 'verified') {
+      throw Exception('Borrower KYC is not verified.');
+    }
+
+    await FirebaseFirestore.instance.collection('loans').doc(loanId).update({
+      'status': LoanStatus.approved.toString(),
+    });
   }
 }

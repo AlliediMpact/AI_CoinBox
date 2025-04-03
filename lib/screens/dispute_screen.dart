@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../escrow.dart';
+import '../providers/user_provider.dart';
 
 class DisputeScreen extends StatefulWidget {
   final Transaction transaction;

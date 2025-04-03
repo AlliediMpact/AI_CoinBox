@@ -1,45 +1,65 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Referral {
   final String id;
-  final String userId;
-  final String userName;
   final String referrerId;
-  final String referralCode;
-  final double commission;
-  final String joinDate;
+  final String referredUserId;
+  final DateTime referralDate;
+  final double commissionEarned;
+  final bool isActive;
+  final String membershipTier;
 
   Referral({
     required this.id,
-    required this.userId,
-    required this.userName,
     required this.referrerId,
-    required this.referralCode,
-    required this.commission,
-    required this.joinDate,
+    required this.referredUserId,
+    required this.referralDate,
+    required this.commissionEarned,
+    this.isActive = true,
+    required this.membershipTier,
   });
 
-  // Create a Referral from a map (e.g., from Firestore)
-  factory Referral.fromMap(String id, Map<String, dynamic> data) {
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'referrerId': referrerId,
+    'referredUserId': referredUserId,
+    'referralDate': Timestamp.fromDate(referralDate),
+    'commissionEarned': commissionEarned,
+    'isActive': isActive,
+    'membershipTier': membershipTier,
+  };
+
+  factory Referral.fromJson(Map<String, dynamic> json) => Referral(
+    id: json['id'],
+    referrerId: json['referrerId'],
+    referredUserId: json['referredUserId'],
+    referralDate: (json['referralDate'] as Timestamp).toDate(),
+    commissionEarned: json['commissionEarned'],
+    isActive: json['isActive'],
+    membershipTier: json['membershipTier'],
+  );
+
+  factory Referral.fromMap(String id, Map<String, dynamic> map) {
     return Referral(
       id: id,
-      userId: data['userId'] ?? '',
-      userName: data['userName'] ?? '',
-      referrerId: data['referrerId'] ?? '',
-      referralCode: data['referralCode'] ?? '',
-      commission: (data['commission'] ?? 0.0).toDouble(),
-      joinDate: data['joinDate'] ?? '',
+      referrerId: map['referrerId'],
+      referredUserId: map['referredUserId'],
+      referralDate: (map['referralDate'] as Timestamp).toDate(),
+      commissionEarned: map['commissionEarned'],
+      isActive: map['isActive'],
+      membershipTier: map['membershipTier'],
     );
   }
 
-  // Convert a Referral to a map (e.g., for Firestore)
-  Map<String, dynamic> toMap() {
-    return {
-      'userId': userId,
-      'userName': userName,
-      'referrerId': referrerId,
-      'referralCode': referralCode,
-      'commission': commission,
-      'joinDate': joinDate,
-    };
+  static Future<void> deactivateReferral(String referredUserId) async {
+    final referralDocs = await FirebaseFirestore.instance
+        .collection('referrals')
+        .where('referredUserId', isEqualTo: referredUserId)
+        .get();
+
+    for (final doc in referralDocs.docs) {
+      await doc.reference.update({'isActive': false});
+    }
   }
 }
 

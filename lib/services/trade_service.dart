@@ -11,9 +11,8 @@ class TradeService {
       QuerySnapshot snapshot =
           await FirebaseFirestore.instance.collection('investments').get();
       return snapshot.docs
-          .map((doc) => Investment.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .map((doc) => Investment.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
-
     } catch (e) {
       throw Exception("Error fetching investments: $e");
     }
@@ -25,9 +24,8 @@ class TradeService {
       QuerySnapshot snapshot =
           await FirebaseFirestore.instance.collection('loans').get();
       return snapshot.docs
-          .map((doc) => Loan.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .map((doc) => Loan.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
-
     } catch (e) {
       throw Exception("Error fetching loans: $e");
     }

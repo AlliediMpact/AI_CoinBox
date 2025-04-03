@@ -1,66 +1,73 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/firebase_service.dart';
+
+enum InvestmentStatus { pending, active, completed, cancelled }
 
 class Investment {
-  final String? id;
-  final String userId;
+  final String id;
+  final String investorId;
   final double amount;
-  final String status;
-  final DateTime createdAt;
-  final DateTime maturityDate;
-  final String? tradeId;
-  final String? loanId;
-  final DateTime? matchedAt;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final InvestmentStatus status;
+  final double monthlyInterestRate;
+  final double totalReturns;
+  final List<String> earningsHistory;
+  final Map<String, dynamic>? metadata;
 
   Investment({
-    this.id,
-    required this.userId,
+    required this.id,
+    required this.investorId,
     required this.amount,
+    required this.startDate,
+    this.endDate,
     required this.status,
-    required this.createdAt,
-    required this.maturityDate,
-    this.tradeId,
-    this.loanId,
-    this.matchedAt,
-  });
+    this.monthlyInterestRate = 0.20, // 20% monthly as per business logic
+    this.totalReturns = 0.0,
+    List<String>? earningsHistory,
+    this.metadata,
+  }) : this.earningsHistory = earningsHistory ?? [];
 
-  Map<String, dynamic> toMap() {
-    return {
-      'userId': userId,
-      'amount': amount,
-      'status': status,
-      'createdAt': createdAt.toIso8601String(),
-      'maturityDate': maturityDate.toIso8601String(),
-      'tradeId': tradeId,
-      'loanId': loanId,
-      'matchedAt': matchedAt?.toIso8601String(),
-    };
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'investorId': investorId,
+        'amount': amount,
+        'startDate': Timestamp.fromDate(startDate),
+        'endDate': endDate != null ? Timestamp.fromDate(endDate!) : null,
+        'status': status.toString(),
+        'monthlyInterestRate': monthlyInterestRate,
+        'totalReturns': totalReturns,
+        'earningsHistory': earningsHistory,
+        'metadata': metadata,
+      };
+
+  static Investment fromJson(Map<String, dynamic> json) => Investment(
+        id: json['id'],
+        investorId: json['investorId'],
+        amount: json['amount'],
+        startDate: (json['startDate'] as Timestamp).toDate(),
+        endDate: json['endDate'] != null
+            ? (json['endDate'] as Timestamp).toDate()
+            : null,
+        status: InvestmentStatus.values
+            .firstWhere((e) => e.toString() == json['status']),
+        monthlyInterestRate: json['monthlyInterestRate'],
+        totalReturns: json['totalReturns'],
+        earningsHistory: List<String>.from(json['earningsHistory'] ?? []),
+        metadata: json['metadata'],
+      );
+
+  double calculateMonthlyReturns() {
+    return amount * monthlyInterestRate;
   }
 
-  static Future<void> create(Investment investment) async {
-    await FirebaseService.firestore
-        .collection('investments')
-        .add(investment.toMap());
-  }
+  // Ensure KYC verification before investment creation
+  static Future<void> createInvestment(String investorId, double amount) async {
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(investorId).get();
 
-  static Stream<QuerySnapshot> getInvestmentsByUser(String userId) {
-    return FirebaseService.firestore
-        .collection('investments')
-        .where('userId', isEqualTo: userId)
-        .snapshots();
-  }
+    if (userDoc.data()?['kycStatus'] != 'verified') {
+      throw Exception('Investor KYC is not verified.');
+    }
 
-  factory Investment.fromMap(Map<String, dynamic> map, String id) {
-    return Investment(
-      id: id,
-      userId: map['userId'],
-      amount: map['amount'],
-      status: map['status'],
-      createdAt: DateTime.parse(map['createdAt']),
-      maturityDate: DateTime.parse(map['maturityDate']),
-      tradeId: map['tradeId'],
-      loanId: map['loanId'],
-      matchedAt: map['matchedAt'] != null ? DateTime.parse(map['matchedAt']) : null,
-    );
+    // ...existing investment creation logic...
   }
 }

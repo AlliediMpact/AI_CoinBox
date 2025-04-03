@@ -3,21 +3,30 @@ import '../services/firebase_service.dart';
 
 class Wallet {
   final String userId;
-  final double balance;
+  double _balance;
   final double commissionBalance;
   final DateTime lastUpdated;
 
   Wallet({
     required this.userId,
-    required this.balance,
+    required double balance,
     required this.commissionBalance,
     required this.lastUpdated,
-  });
+  }) : _balance = balance;
+
+  double get balance => _balance;
+
+  set balance(double newBalance) {
+    if (newBalance < 0) {
+      throw Exception('Balance cannot be negative.');
+    }
+    _balance = newBalance;
+  }
 
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
-      'balance': balance,
+      'balance': _balance,
       'commissionBalance': commissionBalance,
       'lastUpdated': lastUpdated.toIso8601String(),
     };
@@ -33,6 +42,10 @@ class Wallet {
   }
 
   static Future<void> updateBalance(String userId, double amount) async {
+    if (amount < 0) {
+      throw Exception('Balance update cannot be negative.');
+    }
+
     final walletRef = FirebaseService.firestore.collection('wallets').doc(userId);
     
     await FirebaseService.firestore.runTransaction((transaction) async {
